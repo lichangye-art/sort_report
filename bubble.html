@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>氣泡排序動畫</title>
+    <style>
+        #container {
+            display: flex;
+            align-items: flex-end;
+            height: 300px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+        }
+        .bar {
+            background-color: #3498db;
+            margin: 0 2px;
+            width: 20px;
+            transition: height 0.3s;
+        }
+        .bar.active {
+            background-color: #e74c3c;
+        }
+        button {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>氣泡排序動畫示範</h1>
+    <button onclick="window.location.href='index.html'">回首頁</button>
+    <div id="container"></div>
+    <button id="startBtn">開始排序</button>
+    <script>
+        const container = document.getElementById('container');
+        const startBtn = document.getElementById('startBtn');
+        let array = [];
+
+        function generateArray(size = 20) {
+            array = [];
+            for (let i = 0; i < size; i++) {
+                array.push(Math.floor(Math.random() * 100) + 1);
+            }
+        }
+
+        function renderArray() {
+            container.innerHTML = '';
+            array.forEach(value => {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = value * 2 + 'px';
+                container.appendChild(bar);
+            });
+        }
+
+        async function bubbleSortAnimation() {
+            const bars = document.querySelectorAll('.bar');
+            for (let i = 0; i < array.length - 1; i++) {
+                for (let j = 0; j < array.length - i - 1; j++) {
+                    bars[j].classList.add('active');
+                    bars[j + 1].classList.add('active');
+                    await sleep(200);
+
+                    if (array[j] > array[j + 1]) {
+                        // swap values
+                        [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                        bars[j].style.height = array[j] * 2 + 'px';
+                        bars[j + 1].style.height = array[j + 1] * 2 + 'px';
+                    }
+
+                    await sleep(200);
+                    bars[j].classList.remove('active');
+                    bars[j + 1].classList.remove('active');
+                }
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            await bubbleSortAnimation();
+            startBtn.disabled = false;
+        });
+
+        // 初始化
+        generateArray();
+        renderArray();
+    </script>
+</body>
+</html>

@@ -2,91 +2,31 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>氣泡排序動畫</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排序演算法示範</title>
     <style>
-        #container {
-            display: flex;
-            align-items: flex-end;
-            height: 300px;
-            margin: 20px auto;
-            width: 80%;
-            max-width: 600px;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
         }
-        .bar {
+        .link-button {
+            display: inline-block;
+            padding: 10px 20px;
             background-color: #3498db;
-            margin: 0 2px;
-            width: 20px;
-            transition: height 0.3s;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px;
         }
-        .bar.active {
-            background-color: #e74c3c;
-        }
-        button {
-            margin: 20px;
+        .link-button:hover {
+            background-color: #2980b9;
         }
     </style>
 </head>
 <body>
-    <h1>氣泡排序動畫示範</h1>
-    <div id="container"></div>
-    <button id="startBtn">開始排序</button>
-    <script>
-        const container = document.getElementById('container');
-        const startBtn = document.getElementById('startBtn');
-        let array = [];
-
-        function generateArray(size = 20) {
-            array = [];
-            for (let i = 0; i < size; i++) {
-                array.push(Math.floor(Math.random() * 100) + 1);
-            }
-        }
-
-        function renderArray() {
-            container.innerHTML = '';
-            array.forEach(value => {
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                bar.style.height = value * 2 + 'px';
-                container.appendChild(bar);
-            });
-        }
-
-        async function bubbleSortAnimation() {
-            const bars = document.querySelectorAll('.bar');
-            for (let i = 0; i < array.length - 1; i++) {
-                for (let j = 0; j < array.length - i - 1; j++) {
-                    bars[j].classList.add('active');
-                    bars[j + 1].classList.add('active');
-                    await sleep(200);
-
-                    if (array[j] > array[j + 1]) {
-                        // swap values
-                        [array[j], array[j + 1]] = [array[j + 1], array[j]];
-                        bars[j].style.height = array[j] * 2 + 'px';
-                        bars[j + 1].style.height = array[j + 1] * 2 + 'px';
-                    }
-
-                    await sleep(200);
-                    bars[j].classList.remove('active');
-                    bars[j + 1].classList.remove('active');
-                }
-            }
-        }
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        startBtn.addEventListener('click', async () => {
-            startBtn.disabled = true;
-            await bubbleSortAnimation();
-            startBtn.disabled = false;
-        });
-
-        // 初始化
-        generateArray();
-        renderArray();
-    </script>
+    <h1>排序演算法示範</h1>
+    <p>選擇一個演算法來查看動畫示範：</p>
+    <a href="bubble.html" class="link-button">氣泡排序動畫</a>
 </body>
 </html>
