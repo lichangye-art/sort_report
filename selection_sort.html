@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選擇排序法視覺示範</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        #container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 300px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .bar {
+            background-color: #3498db;
+            margin: 0 1px;
+            width: 20px;
+            transition: height 0.3s, background-color 0.3s;
+            position: relative;
+        }
+        .bar.active {
+            background-color: #e74c3c;
+        }
+        .bar.min {
+            background-color: #f39c12;
+        }
+        .bar.sorted {
+            background-color: #27ae60;
+        }
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .info {
+            margin: 20px 0;
+            font-size: 16px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>選擇排序法視覺示範</h1>
+    <div class="info" id="info">點擊"開始排序"來觀看選擇排序的動畫過程</div>
+    <div id="container"></div>
+    <div class="controls">
+        <button onclick="window.location.href='index.html'">回首頁</button>
+        <button id="generateBtn">生成新數組</button>
+        <button id="startBtn">開始排序</button>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const startBtn = document.getElementById('startBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const info = document.getElementById('info');
+        let array = [];
+        let bars = [];
+
+        function generateArray(size = 20) {
+            array = [];
+            for (let i = 0; i < size; i++) {
+                array.push(Math.floor(Math.random() * 100) + 1);
+            }
+        }
+
+        function renderArray() {
+            container.innerHTML = '';
+            bars = [];
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = value * 2 + 'px';
+                bar.dataset.index = index;
+                
+                const valueLabel = document.createElement('div');
+                valueLabel.classList.add('bar-value');
+                valueLabel.textContent = value;
+                bar.appendChild(valueLabel);
+                
+                container.appendChild(bar);
+                bars.push(bar);
+            });
+        }
+
+        async function selectionSortAnimation() {
+            const n = array.length;
+            
+            for (let i = 0; i < n - 1; i++) {
+                let minIndex = i;
+                
+                // 高亮未排序部分
+                for (let k = i; k < n; k++) {
+                    bars[k].classList.add('active');
+                }
+                info.textContent = `從索引 ${i} 開始尋找最小值`;
+                await sleep(500);
+                
+                // 尋找最小值
+                for (let j = i + 1; j < n; j++) {
+                    bars[j].classList.add('active');
+                    bars[minIndex].classList.add('min');
+                    
+                    info.textContent = `比較索引 ${j} (${array[j]}) 與當前最小值 ${array[minIndex]}`;
+                    await sleep(300);
+                    
+                    if (array[j] < array[minIndex]) {
+                        bars[minIndex].classList.remove('min');
+                        minIndex = j;
+                        bars[minIndex].classList.add('min');
+                    }
+                    
+                    bars[j].classList.remove('active');
+                }
+                
+                // 交換
+                if (minIndex !== i) {
+                    [array[i], array[minIndex]] = [array[minIndex], array[i]];
+                    
+                    // 動畫交換高度
+                    bars[i].style.height = array[i] * 2 + 'px';
+                    bars[i].querySelector('.bar-value').textContent = array[i];
+                    bars[minIndex].style.height = array[minIndex] * 2 + 'px';
+                    bars[minIndex].querySelector('.bar-value').textContent = array[minIndex];
+                    
+                    info.textContent = `交換索引 ${i} 和 ${minIndex}`;
+                    await sleep(500);
+                }
+                
+                // 標記已排序
+                bars[i].classList.remove('active', 'min');
+                bars[i].classList.add('sorted');
+                
+                // 移除未排序的高亮
+                for (let k = i + 1; k < n; k++) {
+                    bars[k].classList.remove('active');
+                }
+                
+                info.textContent = `索引 ${i} 已排序完成`;
+                await sleep(300);
+            }
+            
+            // 最後一個元素也標記為已排序
+            bars[n - 1].classList.add('sorted');
+            info.textContent = '排序完成！';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            generateBtn.disabled = true;
+            await selectionSortAnimation();
+            startBtn.disabled = false;
+            generateBtn.disabled = false;
+        });
+
+        generateBtn.addEventListener('click', () => {
+            generateArray();
+            renderArray();
+            info.textContent = '點擊"開始排序"來觀看選擇排序的動畫過程';
+        });
+
+        // 初始化
+        generateArray();
+        renderArray();
+    </script>
+</body>
+</html>
