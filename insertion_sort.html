@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>插入排序法視覺示範</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        #container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 300px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .bar {
+            background-color: #3498db;
+            margin: 0 1px;
+            width: 20px;
+            transition: height 0.3s, background-color 0.3s;
+            position: relative;
+        }
+        .bar.active {
+            background-color: #e74c3c;
+        }
+        .bar.current {
+            background-color: #f39c12;
+        }
+        .bar.sorted {
+            background-color: #27ae60;
+        }
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .info {
+            margin: 20px 0;
+            font-size: 16px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>插入排序法視覺示範</h1>
+    <div class="info" id="info">點擊"開始排序"來觀看插入排序的動畫過程</div>
+    <div id="container"></div>
+    <div class="controls">
+        <button onclick="window.location.href='index.html'">回首頁</button>
+        <button id="generateBtn">生成新數組</button>
+        <button id="startBtn">開始排序</button>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const startBtn = document.getElementById('startBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const info = document.getElementById('info');
+        let array = [];
+        let bars = [];
+
+        function generateArray(size = 20) {
+            array = [];
+            for (let i = 0; i < size; i++) {
+                array.push(Math.floor(Math.random() * 100) + 1);
+            }
+        }
+
+        function renderArray() {
+            container.innerHTML = '';
+            bars = [];
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = value * 2 + 'px';
+                bar.dataset.index = index;
+                
+                const valueLabel = document.createElement('div');
+                valueLabel.classList.add('bar-value');
+                valueLabel.textContent = value;
+                bar.appendChild(valueLabel);
+                
+                container.appendChild(bar);
+                bars.push(bar);
+            });
+        }
+
+        async function insertionSortAnimation() {
+            const n = array.length;
+            
+            // 標記第一個元素為已排序
+            bars[0].classList.add('sorted');
+            info.textContent = `索引 0 已排序`;
+            await sleep(500);
+            
+            // 從第二個元素開始
+            for (let i = 1; i < n; i++) {
+                const key = array[i];
+                bars[i].classList.add('current');
+                
+                info.textContent = `現在要插入索引 ${i} 的值 (${key})`;
+                await sleep(500);
+                
+                let j = i - 1;
+                
+                // 高亮已排序的部分
+                while (j >= 0) {
+                    bars[j].classList.add('active');
+                    info.textContent = `比較值 ${key} 與已排序部分的索引 ${j} (${array[j]})`;
+                    await sleep(300);
+                    
+                    if (array[j] > key) {
+                        // 移動
+                        array[j + 1] = array[j];
+                        bars[j + 1].style.height = array[j + 1] * 2 + 'px';
+                        bars[j + 1].querySelector('.bar-value').textContent = array[j + 1];
+                        
+                        info.textContent = `${array[j]} 大於 ${key}，向右移動`;
+                        await sleep(300);
+                        
+                        bars[j].classList.remove('active');
+                        j--;
+                    } else {
+                        // 找到正確位置
+                        info.textContent = `${array[j]} 小於等於 ${key}，找到插入位置`;
+                        bars[j].classList.remove('active');
+                        break;
+                    }
+                }
+                
+                // 插入
+                array[j + 1] = key;
+                bars[j + 1].style.height = key * 2 + 'px';
+                bars[j + 1].querySelector('.bar-value').textContent = key;
+                
+                info.textContent = `將 ${key} 插入到索引 ${j + 1}`;
+                await sleep(300);
+                
+                // 標記已排序的部分
+                bars[i].classList.remove('current');
+                
+                // 標記所有已排序的元素
+                for (let k = 0; k <= i; k++) {
+                    bars[k].classList.add('sorted');
+                }
+                
+                info.textContent = `前 ${i + 1} 個元素已排序`;
+                await sleep(300);
+            }
+            
+            info.textContent = '排序完成！';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            generateBtn.disabled = true;
+            await insertionSortAnimation();
+            startBtn.disabled = false;
+            generateBtn.disabled = false;
+        });
+
+        generateBtn.addEventListener('click', () => {
+            generateArray();
+            renderArray();
+            info.textContent = '點擊"開始排序"來觀看插入排序的動畫過程';
+        });
+
+        // 初始化
+        generateArray();
+        renderArray();
+    </script>
+</body>
+</html>
