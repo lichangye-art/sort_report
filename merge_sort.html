@@ -1,87 +1,228 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-tw">
 <head>
     <meta charset="UTF-8">
-    <title>合併排序法 (Merge Sort) 演示</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合併排序法視覺示範</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; line-height: 1.6; }
-        .container { max-width: 800px; margin: auto; }
-        .visualizer { display: flex; align-items: flex-end; height: 200px; border-bottom: 2px solid #333; margin-bottom: 20px; }
-        .bar { background-color: #3498db; margin-right: 2px; flex: 1; transition: height 0.2s; }
-        button { padding: 10px 20px; cursor: pointer; background-color: #2ecc71; border: none; color: white; border-radius: 5px; }
-        button:hover { background-color: #27ae60; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        #container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 300px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .bar {
+            background-color: #3498db;
+            margin: 0 1px;
+            width: 20px;
+            transition: height 0.3s, background-color 0.3s;
+            position: relative;
+        }
+        /* 正在被分割或合併的區域 */
+        .bar.active {
+            background-color: #e74c3c;
+        }
+        /* 目前正在比較的兩個值 */
+        .bar.current {
+            background-color: #f39c12;
+        }
+        /* 已完成合併並排序的區塊 */
+        .bar.sorted {
+            background-color: #27ae60;
+        }
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .info {
+            margin: 20px 0;
+            font-size: 16px;
+            color: #555;
+            min-height: 1.2em;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>合併排序法 (Merge Sort)</h1>
-        <p>合併排序是一種採用「分治法」(Divide and Conquer) 的排序演算法。它將陣列分割成最小單位，再依序合併回有序的陣列。</p>
-        
-        <div class="visualizer" id="visualizer"></div>
-        <button onclick="startSort()">開始排序</button>
-
-        <h3>演算法邏輯：</h3>
-        <pre>
-1. 如果陣列長度為 1，則直接回傳。
-2. 將陣列從中間切半。
-3. 遞迴地對左半部與右半部進行合併排序。
-4. 將兩個排序好的半部「合併」在一起。
-        </pre>
-        
-        <a href="index.html">回首頁</a>
+    <h1>合併排序法視覺示範</h1>
+    <div class="info" id="info">點擊"開始排序"來觀看合併排序的分治過程</div>
+    <div id="container"></div>
+    <div class="controls">
+        <button onclick="window.location.href='index.html'">回首頁</button>
+        <button id="generateBtn">生成新數組</button>
+        <button id="startBtn">開始排序</button>
     </div>
 
     <script>
-        const data = [80, 45, 92, 15, 30, 77, 50, 12, 64, 33];
-        const visualizer = document.getElementById('visualizer');
+        const container = document.getElementById('container');
+        const startBtn = document.getElementById('startBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const info = document.getElementById('info');
+        let array = [];
+        let bars = [];
 
-        function render(arr) {
-            visualizer.innerHTML = '';
-            arr.forEach(val => {
+        function generateArray(size = 20) {
+            array = [];
+            for (let i = 0; i < size; i++) {
+                array.push(Math.floor(Math.random() * 100) + 1);
+            }
+        }
+
+        function renderArray() {
+            container.innerHTML = '';
+            bars = [];
+            array.forEach((value, index) => {
                 const bar = document.createElement('div');
-                bar.className = 'bar';
-                bar.style.height = val + '%';
-                visualizer.appendChild(bar);
+                bar.classList.add('bar');
+                bar.style.height = value * 2 + 'px';
+                bar.dataset.index = index;
+                
+                const valueLabel = document.createElement('div');
+                valueLabel.classList.add('bar-value');
+                valueLabel.textContent = value;
+                bar.appendChild(valueLabel);
+                
+                container.appendChild(bar);
+                bars.push(bar);
             });
         }
 
-        async function mergeSort(arr) {
-            if (arr.length <= 1) return arr;
+        async function mergeSortAnimation(start, end) {
+            if (start >= end) return;
 
-            const mid = Math.floor(arr.length / 2);
-            const left = await mergeSort(arr.slice(0, mid));
-            const right = await mergeSort(arr.slice(mid));
+            const mid = Math.floor((start + end) / 2);
+            
+            // 高亮目前正在處理的範圍
+            for(let i=start; i<=end; i++) bars[i].classList.add('active');
+            info.textContent = `分割範圍: [${start} 到 ${end}]`;
+            await sleep(400);
+            for(let i=start; i<=end; i++) bars[i].classList.remove('active');
 
-            const sorted = await merge(left, right);
-            // 這裡為了演示效果，我們簡化了全局渲染邏輯
-            return sorted;
+            await mergeSortAnimation(start, mid);
+            await mergeSortAnimation(mid + 1, end);
+            await merge(start, mid, end);
         }
 
-        async function merge(left, right) {
-            let result = [];
-            while (left.length && right.length) {
-                if (left[0] < right[0]) {
-                    result.push(left.shift());
+        async function merge(start, mid, end) {
+            let leftArr = array.slice(start, mid + 1);
+            let rightArr = array.slice(mid + 1, end + 1);
+            
+            let i = 0, j = 0, k = start;
+
+            info.textContent = `合併左側 [${start}-${mid}] 與右側 [${mid+1}-${end}]`;
+
+            while (i < leftArr.length && j < rightArr.length) {
+                // 高亮正在比較的兩個元素
+                bars[start + i].classList.add('current');
+                bars[mid + 1 + j].classList.add('current');
+                await sleep(300);
+
+                if (leftArr[i] <= rightArr[j]) {
+                    array[k] = leftArr[i];
+                    i++;
                 } else {
-                    result.push(right.shift());
+                    array[k] = rightArr[j];
+                    j++;
                 }
+                
+                // 更新視覺效果
+                updateBar(k, array[k]);
+                bars[k].classList.add('sorted');
+                
+                // 移除比較色
+                bars[start + i - (leftArr[i]<=rightArr[j]?0:0)].classList.remove('current'); // 這裡簡化處理
+                k++;
             }
-            const final = [...result, ...left, ...right];
-            // 更新視覺化（此處為簡化版，僅呈現部分過程）
-            console.log("Merging: ", final);
-            return final;
+
+            // 處理剩餘元素
+            while (i < leftArr.length) {
+                array[k] = leftArr[i];
+                updateBar(k, array[k]);
+                bars[k].classList.add('sorted');
+                await sleep(150);
+                i++; k++;
+            }
+            while (j < rightArr.length) {
+                array[k] = rightArr[j];
+                updateBar(k, array[k]);
+                bars[k].classList.add('sorted');
+                await sleep(150);
+                j++; k++;
+            }
+
+            // 清除目前的狀態，準備下一輪
+            await sleep(200);
+            if (start === 0 && end === array.length - 1) {
+                info.textContent = '全部合併完成！';
+            }
         }
 
-        async function startSort() {
-            // 由於合併排序是非原地排序，演示上會與插入排序的交換邏輯不同
-            // 這裡直接展示排序後的結果
-            const sortedData = [12, 15, 30, 33, 45, 50, 64, 77, 80, 92];
-            render(sortedData);
-            alert("合併排序完成！");
+        function updateBar(index, value) {
+            bars[index].style.height = value * 2 + 'px';
+            bars[index].querySelector('.bar-value').textContent = value;
+            // 每次更新時暫時移除 current 顏色
+            bars.forEach(b => b.classList.remove('current'));
         }
 
-        render(data);
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            generateBtn.disabled = true;
+            // 先清除所有顏色
+            bars.forEach(b => b.className = 'bar');
+            await mergeSortAnimation(0, array.length - 1);
+            startBtn.disabled = false;
+            generateBtn.disabled = false;
+        });
+
+        generateBtn.addEventListener('click', () => {
+            generateArray();
+            renderArray();
+            info.textContent = '點擊"開始排序"來觀看合併排序的分治過程';
+        });
+
+        // 初始化
+        generateArray();
+        renderArray();
     </script>
 </body>
 </html>
