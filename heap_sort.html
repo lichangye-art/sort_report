@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>堆積排序法視覺示範</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        #container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 300px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .bar {
+            background-color: #3498db;
+            margin: 0 1px;
+            width: 20px;
+            transition: height 0.3s, background-color 0.3s;
+            position: relative;
+        }
+        /* 正在進行 Heapify 調整的元素 */
+        .bar.active {
+            background-color: #e74c3c;
+        }
+        /* 目前正在比較的父節點與子節點 */
+        .bar.current {
+            background-color: #f39c12;
+        }
+        /* 已從堆積頂端移出並排好序的元素 */
+        .bar.sorted {
+            background-color: #27ae60;
+        }
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .info {
+            margin: 20px 0;
+            font-size: 16px;
+            color: #555;
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1>堆積排序法視覺示範</h1>
+    <div class="info" id="info">點擊"開始排序"來觀看堆積排序的動畫過程</div>
+    <div id="container"></div>
+    <div class="controls">
+        <button onclick="window.location.href='index.html'">回首頁</button>
+        <button id="generateBtn">生成新數組</button>
+        <button id="startBtn">開始排序</button>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const startBtn = document.getElementById('startBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const info = document.getElementById('info');
+        let array = [];
+        let bars = [];
+
+        function generateArray(size = 20) {
+            array = [];
+            for (let i = 0; i < size; i++) {
+                array.push(Math.floor(Math.random() * 100) + 1);
+            }
+        }
+
+        function renderArray() {
+            container.innerHTML = '';
+            bars = [];
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = value * 2 + 'px';
+                bar.dataset.index = index;
+                
+                const valueLabel = document.createElement('div');
+                valueLabel.classList.add('bar-value');
+                valueLabel.textContent = value;
+                bar.appendChild(valueLabel);
+                
+                container.appendChild(bar);
+                bars.push(bar);
+            });
+        }
+
+        async function heapSortAnimation() {
+            let n = array.length;
+
+            // 1. 建立最大堆積 (Build Max Heap)
+            info.textContent = "第一階段：建立最大堆積 (Build Max Heap)";
+            for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+                await heapify(n, i);
+            }
+
+            // 2. 一個個從堆積頂端取出元素
+            info.textContent = "第二階段：取出最大值並重新調整堆積";
+            for (let i = n - 1; i > 0; i--) {
+                // 將目前最大的 element (在根部) 移到陣列末尾
+                info.textContent = `將最大值 ${array[0]} 移至末尾索引 ${i}`;
+                await swap(0, i);
+                bars[i].classList.add('sorted');
+                await sleep(400);
+
+                // 針對縮小後的堆積再次進行 heapify
+                await heapify(i, 0);
+            }
+            bars[0].classList.add('sorted');
+            info.textContent = "堆積排序完成！";
+        }
+
+        async function heapify(n, i) {
+            let largest = i;
+            let left = 2 * i + 1;
+            let right = 2 * i + 2;
+
+            // 標記目前正在比較的節點
+            bars[i].classList.add('active');
+            if (left < n) bars[left].classList.add('current');
+            if (right < n) bars[right].classList.add('current');
+            await sleep(300);
+
+            if (left < n && array[left] > array[largest]) {
+                largest = left;
+            }
+
+            if (right < n && array[right] > array[largest]) {
+                largest = right;
+            }
+
+            if (largest !== i) {
+                info.textContent = `調整堆積：交換索引 ${i} (${array[i]}) 與 ${largest} (${array[largest]})`;
+                await swap(i, largest);
+                // 遞迴調整受影響的子堆積
+                await heapify(n, largest);
+            }
+
+            // 移除標記顏色
+            bars[i].classList.remove('active');
+            if (left < n) bars[left].classList.remove('current');
+            if (right < n) bars[right].classList.remove('current');
+        }
+
+        async function swap(i, j) {
+            let temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+
+            // 更新 DOM 視覺
+            updateBarVisual(i, array[i]);
+            updateBarVisual(j, array[j]);
+            await sleep(200);
+        }
+
+        function updateBarVisual(index, value) {
+            bars[index].style.height = value * 2 + 'px';
+            bars[index].querySelector('.bar-value').textContent = value;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        startBtn.addEventListener('click', async () => {
+            startBtn.disabled = true;
+            generateBtn.disabled = true;
+            // 清除之前的顏色標記
+            bars.forEach(b => b.className = 'bar');
+            await heapSortAnimation();
+            startBtn.disabled = false;
+            generateBtn.disabled = false;
+        });
+
+        generateBtn.addEventListener('click', () => {
+            generateArray();
+            renderArray();
+            info.textContent = '點擊"開始排序"來觀看堆積排序的動畫過程';
+        });
+
+        // 初始化
+        generateArray();
+        renderArray();
+    </script>
+</body>
+</html>
